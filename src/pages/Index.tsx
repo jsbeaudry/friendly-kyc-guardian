@@ -2,6 +2,7 @@ import { useState } from "react";
 import { KYCProgress } from "@/components/KYCProgress";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { LocationCapture } from "@/components/LocationCapture";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
-type Step = "document" | "selfie" | "proof" | "location";
+type Step = "document" | "selfie" | "proof" | "location" | "complete";
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<Step>("document");
@@ -20,6 +21,7 @@ const Index = () => {
   const [selfieImage, setSelfieImage] = useState<string>("");
   const [proofImage, setProofImage] = useState<string>("");
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const { toast } = useToast();
 
   const steps = [
     {
@@ -42,13 +44,26 @@ const Index = () => {
       completed: currentStep !== "location" && !!location,
       current: currentStep === "location",
     },
+    {
+      title: "Complete",
+      completed: currentStep === "complete",
+      current: currentStep === "complete",
+    },
   ];
 
   const handleNext = () => {
-    const stepOrder: Step[] = ["document", "selfie", "proof", "location"];
+    const stepOrder: Step[] = ["document", "selfie", "proof", "location", "complete"];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex < stepOrder.length - 1) {
-      setCurrentStep(stepOrder[currentIndex + 1]);
+      const nextStep = stepOrder[currentIndex + 1];
+      setCurrentStep(nextStep);
+      
+      if (nextStep === "complete") {
+        toast({
+          title: "Verification Complete",
+          description: "Thank you! Your identity verification has been submitted successfully.",
+        });
+      }
     }
   };
 
@@ -112,19 +127,49 @@ const Index = () => {
               <LocationCapture onLocationCaptured={setLocation} />
             )}
 
-            <div className="mt-8 flex justify-end">
-              <Button
-                onClick={handleNext}
-                disabled={
-                  (currentStep === "document" && !documentImage) ||
-                  (currentStep === "selfie" && !selfieImage) ||
-                  (currentStep === "proof" && !proofImage) ||
-                  (currentStep === "location" && !location)
-                }
-              >
-                Continue
-              </Button>
-            </div>
+            {currentStep === "complete" && (
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                  <svg
+                    className="w-8 h-8 text-green-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
+                </div>
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Verification Submitted
+                </h2>
+                <p className="text-gray-600">
+                  Thank you for completing the verification process. We will review your
+                  submission and notify you of the results.
+                </p>
+              </div>
+            )}
+
+            {currentStep !== "complete" && (
+              <div className="mt-8 flex justify-end">
+                <Button
+                  onClick={handleNext}
+                  disabled={
+                    (currentStep === "document" && !documentImage) ||
+                    (currentStep === "selfie" && !selfieImage) ||
+                    (currentStep === "proof" && !proofImage) ||
+                    (currentStep === "location" && !location)
+                  }
+                >
+                  Continue
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

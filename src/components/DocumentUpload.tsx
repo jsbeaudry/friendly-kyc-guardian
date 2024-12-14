@@ -8,12 +8,14 @@ interface DocumentUploadProps {
   onUpload: (file: string) => void;
   title: string;
   description: string;
+  isLivenessCheck?: boolean;
 }
 
 export const DocumentUpload = ({
   onUpload,
   title,
   description,
+  isLivenessCheck = false,
 }: DocumentUploadProps) => {
   const [showCamera, setShowCamera] = useState(false);
 
@@ -32,7 +34,9 @@ export const DocumentUpload = ({
   const handleCapture = (image: string) => {
     onUpload(image);
     setShowCamera(false);
-    toast.success("Photo captured successfully");
+    if (!isLivenessCheck) {
+      toast.success("Photo captured successfully");
+    }
   };
 
   return (
@@ -49,24 +53,30 @@ export const DocumentUpload = ({
           className="flex-1"
         >
           <LucideCamera className="mr-2 h-4 w-4" />
-          Take Photo
+          {isLivenessCheck ? "Start Verification" : "Take Photo"}
         </Button>
-        <div className="relative flex-1">
-          <Button variant="outline" className="w-full">
-            <Upload className="mr-2 h-4 w-4" />
-            Upload File
-          </Button>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileUpload}
-            className="absolute inset-0 opacity-0 cursor-pointer"
-          />
-        </div>
+        {!isLivenessCheck && (
+          <div className="relative flex-1">
+            <Button variant="outline" className="w-full">
+              <Upload className="mr-2 h-4 w-4" />
+              Upload File
+            </Button>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            />
+          </div>
+        )}
       </div>
 
       {showCamera && (
-        <Camera onCapture={handleCapture} onClose={() => setShowCamera(false)} />
+        <Camera
+          onCapture={handleCapture}
+          onClose={() => setShowCamera(false)}
+          isLivenessCheck={isLivenessCheck}
+        />
       )}
     </div>
   );

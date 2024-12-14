@@ -100,8 +100,9 @@ const Index = () => {
             {currentStep === "proof" && (
               <DocumentUpload
                 title="Human Verification"
-                description="Please follow the instructions for liveness detection"
+                description="Please follow the on-screen instructions for liveness detection"
                 onUpload={setProofImage}
+                isLivenessCheck={true}
               />
             )}
 

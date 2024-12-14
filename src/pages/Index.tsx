@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { KYCProgress } from "@/components/KYCProgress";
 import { DocumentUpload } from "@/components/DocumentUpload";
+import { LocationCapture } from "@/components/LocationCapture";
 import {
   Select,
   SelectContent,
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
-type Step = "document" | "selfie" | "proof" | "address";
+type Step = "document" | "selfie" | "proof" | "location";
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<Step>("document");
@@ -18,6 +19,7 @@ const Index = () => {
   const [documentImage, setDocumentImage] = useState<string>("");
   const [selfieImage, setSelfieImage] = useState<string>("");
   const [proofImage, setProofImage] = useState<string>("");
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const steps = [
     {
@@ -36,14 +38,14 @@ const Index = () => {
       current: currentStep === "proof",
     },
     {
-      title: "Address",
-      completed: false,
-      current: currentStep === "address",
+      title: "Location",
+      completed: currentStep !== "location" && !!location,
+      current: currentStep === "location",
     },
   ];
 
   const handleNext = () => {
-    const stepOrder: Step[] = ["document", "selfie", "proof", "address"];
+    const stepOrder: Step[] = ["document", "selfie", "proof", "location"];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex < stepOrder.length - 1) {
       setCurrentStep(stepOrder[currentIndex + 1]);
@@ -106,15 +108,8 @@ const Index = () => {
               />
             )}
 
-            {currentStep === "address" && (
-              <div className="text-center">
-                <h2 className="text-xl font-semibold text-kyc-text">
-                  Address Verification
-                </h2>
-                <p className="text-gray-600 mt-1">
-                  Coming soon: Address verification feature
-                </p>
-              </div>
+            {currentStep === "location" && (
+              <LocationCapture onLocationCaptured={setLocation} />
             )}
 
             <div className="mt-8 flex justify-end">
@@ -123,7 +118,8 @@ const Index = () => {
                 disabled={
                   (currentStep === "document" && !documentImage) ||
                   (currentStep === "selfie" && !selfieImage) ||
-                  (currentStep === "proof" && !proofImage)
+                  (currentStep === "proof" && !proofImage) ||
+                  (currentStep === "location" && !location)
                 }
               >
                 Continue

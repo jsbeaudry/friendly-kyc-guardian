@@ -11,17 +11,24 @@ interface CameraProps {
 
 export const Camera = ({ onCapture, onClose, isLivenessCheck = false }: CameraProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [isPerformingLivenessCheck, setIsPerformingLivenessCheck] = useState(false);
   const [livenessInstructions, setLivenessInstructions] = useState<string>("");
 
   const startCamera = useCallback(async () => {
     try {
+      // Stop any existing stream before starting a new one
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user" },
         audio: false,
       });
-      setStream(mediaStream);
+      
+      streamRef.current = mediaStream;
+      
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         await videoRef.current.play();
@@ -29,15 +36,19 @@ export const Camera = ({ onCapture, onClose, isLivenessCheck = false }: CameraPr
     } catch (error) {
       console.error("Error accessing camera:", error);
       toast.error("Could not access camera. Please check permissions.");
+      onClose();
     }
-  }, []);
+  }, [onClose]);
 
   const stopCamera = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
-  }, [stream]);
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  }, []);
 
   const capturePhoto = useCallback(() => {
     if (videoRef.current) {
@@ -64,45 +75,44 @@ export const Camera = ({ onCapture, onClose, isLivenessCheck = false }: CameraPr
       "Please smile",
     ];
 
+    setIsPerformingLivenessCheck(true);
+
     for (const instruction of instructions) {
       setLivenessInstructions(instruction);
-      setIsPerformingLivenessCheck(true);
-      
-      // Wait for 3 seconds for each instruction
       await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // Capture the frame for verification
-      if (videoRef.current) {
-        const canvas = document.createElement("canvas");
-        canvas.width = videoRef.current.videoWidth;
-        canvas.height = videoRef.current.videoHeight;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(videoRef.current, 0, 0);
-          // Here you would typically send this frame to your backend for liveness verification
-          // For now, we'll simulate success
-        }
+      if (!streamRef.current) {
+        break; // Stop if camera was closed
       }
     }
 
-    setIsPerformingLivenessCheck(false);
-    setLivenessInstructions("");
-    toast.success("Liveness check completed successfully");
-    capturePhoto();
+    if (streamRef.current) {
+      setIsPerformingLivenessCheck(false);
+      setLivenessInstructions("");
+      toast.success("Liveness check completed successfully");
+      capturePhoto();
+    }
   }, [isLivenessCheck, capturePhoto]);
 
   useEffect(() => {
-    startCamera();
+    let mounted = true;
+
+    const initCamera = async () => {
+      if (mounted) {
+        await startCamera();
+        if (isLivenessCheck && mounted) {
+          performLivenessCheck();
+        }
+      }
+    };
+
+    initCamera();
+
     return () => {
+      mounted = false;
       stopCamera();
     };
-  }, [startCamera, stopCamera]);
-
-  useEffect(() => {
-    if (stream && isLivenessCheck) {
-      performLivenessCheck();
-    }
-  }, [stream, isLivenessCheck, performLivenessCheck]);
+  }, [startCamera, stopCamera, isLivenessCheck, performLivenessCheck]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -127,7 +137,6 @@ export const Camera = ({ onCapture, onClose, isLivenessCheck = false }: CameraPr
           <div className="relative">
             <video
               ref={videoRef}
-              autoPlay
               playsInline
               className="w-full rounded-lg"
             />
@@ -140,6 +149,7 @@ export const Camera = ({ onCapture, onClose, isLivenessCheck = false }: CameraPr
 
           {!isLivenessCheck && !isPerformingLivenessCheck && (
             <Button className="w-full" onClick={capturePhoto}>
+              <LucideCamera className="mr-2 h-4 w-4" />
               Capture Photo
             </Button>
           )}

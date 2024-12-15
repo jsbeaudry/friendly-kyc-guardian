@@ -74,8 +74,8 @@ export const LocationCapture = ({ onLocationCaptured }: LocationCaptureProps) =>
             height="200"
             frameBorder="0"
             style={{ border: 0 }}
-            src={`https://www.openstreetmap.org/export/embed.html?bbox=${location.lng-0.01},${location.lat-0.01},${location.lng+0.01},${location.lat+0.01}&layer=mapnik&marker=${location.lat},${location.lng}`}
-            className="bg-[#F2FCE2]"
+            src={`https://www.openstreetmap.org/export/embed.html?bbox=${location.lng-0.005},${location.lat-0.005},${location.lng+0.005},${location.lat+0.005}&layer=mapnik&marker=${location.lat},${location.lng}`}
+            className="bg-gray-50"
           />
         </div>
       )}

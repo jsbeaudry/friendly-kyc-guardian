@@ -70,9 +70,9 @@ export const DocumentUpload = ({
   const renderThumbnail = (image: string, label: string) => {
     if (!image) return null;
     return (
-      <div className="mt-4">
-        <p className="text-sm text-gray-600 mb-1">{label}:</p>
-        <img src={image} alt={label} className="w-32 h-20 object-cover rounded-lg border border-gray-200" />
+      <div className="inline-block mr-4">
+        <p className="text-sm text-gray-600 mb-1">{label}</p>
+        <img src={image} alt={label} className="w-24 h-16 object-cover rounded-lg border border-gray-200" />
       </div>
     );
   };
@@ -85,7 +85,7 @@ export const DocumentUpload = ({
       </div>
 
       {isPassport && (
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-wrap gap-4 justify-center">
           {renderThumbnail(frontImage, "Front Page")}
           {renderThumbnail(backImage, "Back Page")}
         </div>

@@ -3,6 +3,7 @@ import { Camera } from "./Camera";
 import { Button } from "@/components/ui/button";
 import { Camera as LucideCamera, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { Progress } from "@/components/ui/progress";
 
 interface DocumentUploadProps {
   onUpload: (file: string) => void;
@@ -23,6 +24,8 @@ export const DocumentUpload = ({
   const [frontImage, setFrontImage] = useState<string>("");
   const [backImage, setBackImage] = useState<string>("");
   const [captureBack, setCaptureBack] = useState(false);
+  const [livenessProgress, setLivenessProgress] = useState(0);
+  const [capturedImage, setCapturedImage] = useState<string>("");
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -47,7 +50,21 @@ export const DocumentUpload = ({
   };
 
   const handleCapture = (image: string) => {
-    if (isPassport && !frontImage) {
+    if (isLivenessCheck) {
+      setCapturedImage(image);
+      // Simulate liveness check progress
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        setLivenessProgress(progress);
+        if (progress >= 100) {
+          clearInterval(interval);
+          onUpload(image);
+          setShowCamera(false);
+          toast.success("Liveness check completed successfully");
+        }
+      }, 500);
+    } else if (isPassport && !frontImage) {
       setFrontImage(image);
       onUpload(image);
       setShowCamera(false);
@@ -61,9 +78,7 @@ export const DocumentUpload = ({
     } else {
       onUpload(image);
       setShowCamera(false);
-      if (!isLivenessCheck) {
-        toast.success("Photo captured successfully");
-      }
+      toast.success("Photo captured successfully");
     }
   };
 
@@ -84,6 +99,48 @@ export const DocumentUpload = ({
         <p className="text-gray-600 mt-1">{description}</p>
       </div>
 
+      {isLivenessCheck && livenessProgress > 0 && (
+        <div className="relative w-48 h-48 mx-auto">
+          <div className="absolute inset-0">
+            <svg className="w-full h-full transform -rotate-90">
+              <circle
+                cx="96"
+                cy="96"
+                r="92"
+                fill="none"
+                stroke="#EFF6FF"
+                strokeWidth="8"
+              />
+              <circle
+                cx="96"
+                cy="96"
+                r="92"
+                fill="none"
+                stroke="#1E40AF"
+                strokeWidth="8"
+                strokeDasharray={`${2 * Math.PI * 92}`}
+                strokeDashoffset={`${2 * Math.PI * 92 * (1 - livenessProgress / 100)}`}
+                className="transition-all duration-500"
+              />
+            </svg>
+          </div>
+          {capturedImage && (
+            <div className="absolute inset-2 rounded-full overflow-hidden">
+              <img
+                src={capturedImage}
+                alt="Captured face"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-2xl font-bold text-kyc-primary">
+              {livenessProgress}%
+            </span>
+          </div>
+        </div>
+      )}
+
       {isPassport && (
         <div className="flex flex-wrap gap-4 justify-center">
           {renderThumbnail(frontImage, "Front Page")}
@@ -91,7 +148,7 @@ export const DocumentUpload = ({
         </div>
       )}
 
-      {(!isPassport || !backImage) && (
+      {(!isPassport || !backImage) && !livenessProgress && (
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
             variant="outline"

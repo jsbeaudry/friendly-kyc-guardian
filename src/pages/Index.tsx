@@ -18,6 +18,7 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState<Step>("document");
   const [documentType, setDocumentType] = useState<string>("");
   const [documentImage, setDocumentImage] = useState<string>("");
+  const [documentBackImage, setDocumentBackImage] = useState<string>("");
   const [selfieImage, setSelfieImage] = useState<string>("");
   const [proofImage, setProofImage] = useState<string>("");
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -99,8 +100,9 @@ const Index = () => {
                 {documentType && (
                   <DocumentUpload
                     title="Upload Your Document"
-                    description="Please upload a clear photo of your document"
-                    onUpload={setDocumentImage}
+                    description={documentType === "passport" ? "Please upload front and back pages of your passport" : "Please upload a clear photo of your document"}
+                    onUpload={documentType === "passport" && !documentImage ? setDocumentImage : setDocumentBackImage}
+                    isPassport={documentType === "passport"}
                   />
                 )}
               </div>
@@ -161,6 +163,7 @@ const Index = () => {
                   onClick={handleNext}
                   disabled={
                     (currentStep === "document" && !documentImage) ||
+                    (currentStep === "document" && documentType === "passport" && !documentBackImage) ||
                     (currentStep === "selfie" && !selfieImage) ||
                     (currentStep === "proof" && !proofImage) ||
                     (currentStep === "location" && !location)

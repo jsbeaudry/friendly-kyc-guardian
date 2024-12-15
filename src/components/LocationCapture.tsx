@@ -9,6 +9,7 @@ interface LocationCaptureProps {
 
 export const LocationCapture = ({ onLocationCaptured }: LocationCaptureProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const captureLocation = () => {
     setIsLoading(true);
@@ -21,11 +22,12 @@ export const LocationCapture = ({ onLocationCaptured }: LocationCaptureProps) =>
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const location = {
+        const newLocation = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         };
-        onLocationCaptured(location);
+        setLocation(newLocation);
+        onLocationCaptured(newLocation);
         toast.success("Location captured successfully");
         setIsLoading(false);
       },
@@ -43,7 +45,6 @@ export const LocationCapture = ({ onLocationCaptured }: LocationCaptureProps) =>
   };
 
   useEffect(() => {
-    // Automatically request location when component mounts
     captureLocation();
   }, []);
 
@@ -64,6 +65,20 @@ export const LocationCapture = ({ onLocationCaptured }: LocationCaptureProps) =>
         <MapPin className="mr-2 h-4 w-4" />
         {isLoading ? "Getting Location..." : "Capture Location"}
       </Button>
+
+      {location && (
+        <div className="mt-4 rounded-lg overflow-hidden border border-gray-200">
+          <iframe
+            title="Location Map"
+            width="100%"
+            height="200"
+            frameBorder="0"
+            style={{ border: 0 }}
+            src={`https://www.openstreetmap.org/export/embed.html?bbox=${location.lng-0.01},${location.lat-0.01},${location.lng+0.01},${location.lat+0.01}&layer=mapnik&marker=${location.lat},${location.lng}`}
+            className="bg-[#F2FCE2]"
+          />
+        </div>
+      )}
     </div>
   );
 };
